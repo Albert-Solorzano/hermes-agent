@@ -1,14 +1,16 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
-# Instalar dependencias necesarias
-RUN pip install --no-cache-dir requests gradio hermes-agent python-telegram-bot
+# Instalar las librerías del requirements
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-# Copiar tu script de Python
+# Copiar el código del agente
 COPY app.py .
 
-# Exponer el puerto estándar que leerá SnapDeploy
+# Exponer el puerto obligatorio de SnapDeploy
 EXPOSE 7860
 
 CMD ["python", "app.py"]
