@@ -1,0 +1,4 @@
+gradio
+requests
+hermes-agent
+python-telegram-bot
