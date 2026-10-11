@@ -26,12 +26,13 @@ agent = HermesAgent(
 # Arrancar el proceso de escucha del agente de manera asíncrona
 def iniciar_escucha_agente():
     try:
-        # Intenta mapear la plataforma configurada en las variables de entorno
-        agent.run_conversation(user_message="System boot", platform="telegram")
+        # Quitamos el argumento 'platform' que causaba el aviso en el SDK moderno
+        agent.run_conversation(user_message="System boot")
     except Exception as e:
         print(f"⚠️ Nota de inicialización de backend: {e}")
 
 threading.Thread(target=iniciar_escucha_agente, daemon=True).start()
+
 
 # 3. SISTEMA DE AUTO-PING PARA EVITAR QUE SNAPDEPLOY SE DUERMA
 def mantener_despierto():
