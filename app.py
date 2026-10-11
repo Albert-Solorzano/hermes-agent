@@ -14,25 +14,33 @@ telegram_user_id = os.environ.get("TELEGRAM_USER_ID")
 notion_token = os.environ.get("NOTION_API_KEY")
 app_url = os.environ.get("APP_URL", "https://tu-app-temporal.dev")
 
-# 2. INICIALIZAR EL BACKEND DE HERMES SEGÚN LA DOCUMENTACIÓN DEL SDK
-# El constructor acepta 'api_key' y el modelo en formato estándar
+# 2. INICIALIZAR EL BACKEND DE HERMES CON EL FORMATO CORRECTO DE GEMINI
 agent = HermesAgent(
-    model="google/gemini-1.5-flash",  # Formato oficial de ruta para el modelo
+    model="gemini-1.5-flash",  # Formato limpio para la API de Google
     api_key=llm_api_key,
     enabled_toolsets=["web_search", "telegram_messaging", "notion_integration"],
     quiet_mode=True
 )
 
-# Arrancar el proceso de escucha del agente de manera asíncrona
+# Arrancar el proceso de escucha continua del agente para Telegram
 def iniciar_escucha_agente():
+    print("🤖 Iniciando escucha de comandos en segundo plano...")
+    # El primer mensaje inicializa la sesión de forma segura
     try:
-        # Quitamos el argumento 'platform' que causaba el aviso en el SDK moderno
         agent.run_conversation(user_message="System boot")
     except Exception as e:
         print(f"⚠️ Nota de inicialización de backend: {e}")
+        
+    # Bucle infinito para mantener el webhook/polling de Telegram activo 24/7
+    while True:
+        try:
+            # Mantiene al agente atento a nuevos eventos entrantes de Telegram
+            agent.run_conversation(user_message="Check updates")
+        except Exception as e:
+            print(f"⚠️ Alerta en bucle de eventos: {e}")
+        time.sleep(2) # Evita saturar la CPU del contenedor gratuito
 
 threading.Thread(target=iniciar_escucha_agente, daemon=True).start()
-
 
 # 3. SISTEMA DE AUTO-PING PARA EVITAR QUE SNAPDEPLOY SE DUERMA
 def mantener_despierto():
@@ -46,10 +54,14 @@ def mantener_despierto():
             print(f"❌ [Auto-Ping] Error de conexión: {e}")
         time.sleep(14 * 60)  # Se ejecuta estrictamente cada 14 minutos
 
-# 4. INTERFAZ WEB DE GRADIO
+# 4. INTERFAZ WEB DE GRADIO (MÉTODO OFICIAL CORREGIDO)
 def responder_chat_web(mensaje, historial):
-    # La función .chat() procesa el mensaje directamente en el SDK
-    return agent.chat(mensaje)
+    try:
+        # Se usa run_conversation en lugar de .chat() para interactuar con el SDK
+        respuesta = agent.run_conversation(user_message=mensaje)
+        return respuesta
+    except Exception as e:
+        return f"Error al procesar el comando: {e}"
 
 demo = gr.ChatInterface(
     fn=responder_chat_web, 
