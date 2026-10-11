@@ -8,44 +8,41 @@ import gradio as gr
 from run_agent import AIAgent as HermesAgent
 
 # 1. LEER LAS VARIABLES DE ENTORNO OFICIALES
-llm_api_key = os.environ.get("GEMINI_API_KEY")
+# Usaremos OpenRouter para canalizar a Gemini sin que choque el endpoint v1beta
+llm_api_key = os.environ.get("OPENROUTER_API_KEY") or os.environ.get("GEMINI_API_KEY")
 telegram_token = os.environ.get("TELEGRAM_BOT_TOKEN")
 telegram_user_id = os.environ.get("TELEGRAM_USER_ID")
 notion_token = os.environ.get("NOTION_API_KEY")
 app_url = os.environ.get("APP_URL", "https://tu-app-temporal.dev")
 
-# 2. INICIALIZAR EL BACKEND DE HERMES CON EL FORMATO COMPLETO PARA GOOGLE AI STUDIO
+# 2. INICIALIZAR EL BACKEND DE HERMES CON EL PUENTE CORRECTO
 agent = HermesAgent(
-    model="models/gemini-1.5-flash-latest",  # <-- CAMBIADO: Con el prefijo de ruta y el tag -latest
+    model="google/gemini-1.5-flash",  # Formato estándar a través de OpenRouter
     api_key=llm_api_key,
     enabled_toolsets=["web_search", "telegram_messaging", "notion_integration"],
     quiet_mode=True
 )
 
-
 # Arrancar el proceso de escucha continua del agente para Telegram
 def iniciar_escucha_agente():
     print("🤖 Iniciando escucha de comandos en segundo plano...")
-    # El primer mensaje inicializa la sesión de forma segura
     try:
         agent.run_conversation(user_message="System boot")
     except Exception as e:
         print(f"⚠️ Nota de inicialización de backend: {e}")
         
-    # Bucle infinito para mantener el webhook/polling de Telegram activo 24/7
     while True:
         try:
-            # Mantiene al agente atento a nuevos eventos entrantes de Telegram
             agent.run_conversation(user_message="Check updates")
         except Exception as e:
             print(f"⚠️ Alerta en bucle de eventos: {e}")
-        time.sleep(2) # Evita saturar la CPU del contenedor gratuito
+        time.sleep(2)
 
 threading.Thread(target=iniciar_escucha_agente, daemon=True).start()
 
 # 3. SISTEMA DE AUTO-PING PARA EVITAR QUE SNAPDEPLOY SE DUERMA
 def mantener_despierto():
-    time.sleep(30)  # Esperar a que Gradio encienda por completo
+    time.sleep(30)
     print("🚀 Sistema de Auto-Ping activado...")
     while True:
         try:
@@ -53,12 +50,11 @@ def mantener_despierto():
             print(f"⏱️ [Auto-Ping] Solicitud enviada a {app_url}. Estado: {response.status_code}")
         except Exception as e:
             print(f"❌ [Auto-Ping] Error de conexión: {e}")
-        time.sleep(14 * 60)  # Se ejecuta estrictamente cada 14 minutos
+        time.sleep(14 * 60)
 
-# 4. INTERFAZ WEB DE GRADIO (MÉTODO OFICIAL CORREGIDO)
+# 4. INTERFAZ WEB DE GRADIO
 def responder_chat_web(mensaje, historial):
     try:
-        # Se usa run_conversation en lugar de .chat() para interactuar con el SDK
         respuesta = agent.run_conversation(user_message=mensaje)
         return respuesta
     except Exception as e:
