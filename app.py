@@ -8,17 +8,20 @@ import gradio as gr
 from run_agent import AIAgent as HermesAgent
 
 # 1. LEER LAS VARIABLES DE ENTORNO OFICIALES
-# Usaremos OpenRouter para canalizar a Gemini sin que choque el endpoint v1beta
-llm_api_key = os.environ.get("OPENROUTER_API_KEY") or os.environ.get("GEMINI_API_KEY")
+# Hermes detecta el proveedor gemini automáticamente con esta URL base
+llm_api_key = os.environ.get("GOOGLE_API_KEY") or os.environ.get("GEMINI_API_KEY")
 telegram_token = os.environ.get("TELEGRAM_BOT_TOKEN")
 telegram_user_id = os.environ.get("TELEGRAM_USER_ID")
 notion_token = os.environ.get("NOTION_API_KEY")
 app_url = os.environ.get("APP_URL", "https://tu-app-temporal.dev")
 
-# 2. INICIALIZAR EL BACKEND DE HERMES CON EL PUENTE CORRECTO
+# 2. INICIALIZAR EL BACKEND DE HERMES SEGÚN LA DOCUMENTACIÓN DEL SDK
+# El constructor acepta 'api_key' y el modelo en formato estándar
+# Usa el formato nativo de Gemini (no OpenRouter-style) y la URL base oficial
 agent = HermesAgent(
-    model="google/gemini-1.5-flash",  # Formato estándar a través de OpenRouter
+    model="gemini-2.5-flash",  # Formato nativo de Gemini; evita gemini-1.5-flash (descontinuado)
     api_key=llm_api_key,
+    base_url="https://generativelanguage.googleapis.com/v1beta",
     enabled_toolsets=["web_search", "telegram_messaging", "notion_integration"],
     quiet_mode=True
 )
