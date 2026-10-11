@@ -14,13 +14,14 @@ telegram_user_id = os.environ.get("TELEGRAM_USER_ID")
 notion_token = os.environ.get("NOTION_API_KEY")
 app_url = os.environ.get("APP_URL", "https://tu-app-temporal.dev")
 
-# 2. INICIALIZAR EL BACKEND DE HERMES CON EL FORMATO CORRECTO DE GEMINI
+# 2. INICIALIZAR EL BACKEND DE HERMES CON EL FORMATO COMPLETO PARA GOOGLE AI STUDIO
 agent = HermesAgent(
-    model="gemini-1.5-flash",  # Formato limpio para la API de Google
+    model="models/gemini-1.5-flash-latest",  # <-- CAMBIADO: Con el prefijo de ruta y el tag -latest
     api_key=llm_api_key,
     enabled_toolsets=["web_search", "telegram_messaging", "notion_integration"],
     quiet_mode=True
 )
+
 
 # Arrancar el proceso de escucha continua del agente para Telegram
 def iniciar_escucha_agente():
