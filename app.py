@@ -11,9 +11,7 @@ from run_agent import AIAgent as HermesAgent
 # 1. VARIABLES DE ENTORNO
 # ============================================================
 llm_api_key = (
-    os.environ.get("GEMINI_API_KEY")
-    or os.environ.get("GOOGLE_API_KEY")
-)
+    os.environ.get("GEMINI_API_KEY"))
 
 telegram_token = os.environ.get("TELEGRAM_BOT_TOKEN")
 telegram_allowed_users = os.environ.get("TELEGRAM_ALLOWED_USERS", "")
@@ -32,7 +30,7 @@ TELEGRAM_API = f"https://telegram.org{telegram_token}"
 # ============================================================
 if not llm_api_key:
     raise RuntimeError(
-        "Falta GEMINI_API_KEY o GOOGLE_API_KEY. "
+        "Falta GEMINI_API_KEY. "
         "Configúrala antes de desplegar."
     )
 
