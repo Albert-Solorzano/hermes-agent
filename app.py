@@ -2,7 +2,7 @@ import os
 import time
 import threading
 import requests
-import gradio as gr
+import gradio gr
 
 from run_agent import AIAgent as HermesAgent
 
@@ -19,11 +19,12 @@ telegram_token = os.environ.get("TELEGRAM_BOT_TOKEN")
 telegram_allowed_users = os.environ.get("TELEGRAM_ALLOWED_USERS", "")
 notion_token = os.environ.get("NOTION_API_KEY")
 
-app_url = os.environ.get("APP_URL", "https://tu-app-temporal.dev")
+# URL real asignada por SnapDeploy para el Auto-Ping
+app_url = os.environ.get("APP_URL", "https://snapdeploy.app")
 
 model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
-TELEGRAM_API = f"https://api.telegram.org/bot{telegram_token}"
+TELEGRAM_API = f"https://telegram.org{telegram_token}"
 
 
 # ============================================================
@@ -42,7 +43,6 @@ if not telegram_token:
     )
 
 # IDs numéricos autorizados, separados por coma.
-# Ejemplo: TELEGRAM_ALLOWED_USERS=123456789,987654321
 allowed_users = {
     user.strip()
     for user in telegram_allowed_users.split(",")
@@ -56,7 +56,7 @@ allowed_users = {
 agent = HermesAgent(
     model=model_name,
     api_key=llm_api_key,
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+    base_url="https://googleapis.com",
     enabled_toolsets=[
         "web_search",
         "telegram_messaging",
@@ -220,6 +220,7 @@ demo = gr.ChatInterface(
 # 6. AUTO-PING PARA SNAPDEPLOY
 # ============================================================
 def mantener_despierto():
+    # Esperar a que el servidor web esté completamente arriba antes del primer ping
     time.sleep(30)
     print("🚀 Auto-Ping activado.")
 
@@ -231,8 +232,9 @@ def mantener_despierto():
                 f"Estado: {response.status_code}"
             )
         except Exception as e:
-            print(f"❌ [Auto-Ping] Error: {e}")
+            print(f"❌ [Auto-Ping] Error de resolución: {e}")
 
+        # Ejecutar ping cada 14 minutos (SnapDeploy suspende a los 15 minutos)
         time.sleep(14 * 60)
 
 
@@ -240,18 +242,22 @@ def mantener_despierto():
 # 7. ARRANQUE
 # ============================================================
 if __name__ == "__main__":
+    # Iniciar hilos en segundo plano para procesos paralelos
     threading.Thread(target=mantener_despierto, daemon=True).start()
     threading.Thread(target=telegram_polling, daemon=True).start()
 
     print("🤖 Hermes Agent iniciado.")
     print(f"🧠 Modelo: {model_name}")
     print("📩 Telegram polling activo.")
-    print("🌐 Interfaz web disponible en el puerto 54321.")
 
-    port = int(os.environ.get("PORT", 54321))
+    # Captura el puerto inyectado por SnapDeploy, usa 54321 por defecto
+    port = int(os.environ.get("PORT", 54321)) 
+    print(f"🌐 Interfaz web vinculada al puerto: {port}")
 
-
-    demo.launch(
+    # Inicialización compatible con colas HTTP estables en servidores cloud
+    demo.queue().launch(
         server_name="0.0.0.0",
         server_port=port,
+        prevent_thread_lock=False,
+        share=False,
     )
