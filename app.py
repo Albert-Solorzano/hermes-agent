@@ -246,9 +246,12 @@ if __name__ == "__main__":
     print("🤖 Hermes Agent iniciado.")
     print(f"🧠 Modelo: {model_name}")
     print("📩 Telegram polling activo.")
-    print("🌐 Interfaz web disponible en el puerto 7860.")
+    print("🌐 Interfaz web disponible en el puerto 54321.")
+
+    port = int(os.environ.get("PORT", 54321))
+
 
     demo.launch(
         server_name="0.0.0.0",
-        server_port=7860,
+        server_port=port,
     )
