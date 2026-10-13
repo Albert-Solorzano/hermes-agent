@@ -10,7 +10,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copiar el código del agente
 COPY app.py .
 
-# Exponer el puerto obligatorio de SnapDeploy
-EXPOSE 7860
+EXPOSE 54321
 
 CMD ["python", "app.py"]
